@@ -8,6 +8,7 @@ import {
   UserNode,
   endMessage,
 } from './userList.styles';
+import { bigDataObject } from '../../constants/bigUserList';
 
 export interface User {
   id: number;
@@ -17,32 +18,66 @@ export interface User {
   last_name: string;
 }
 
-// export interface UserListProps {}
+export interface UserListProps {
+  makeMoreData: boolean;
+  withPageFetch: boolean;
+}
 
-export const UserList: React.FC = () => {
+export const UserList: React.FC<UserListProps> = ({
+  makeMoreData,
+  withPageFetch,
+}) => {
   const [pages, setPages] = useState<number>(1);
   const [users, setUsers] = useState<User[] | undefined>([]);
   const [isMaxPagesReached, setIsMaxPagesReached] = useState<boolean>(false);
 
   const url = `https://reqres.in/api/users?page=${pages}`;
 
-  const fetchData = useCallback(async () => {
+  useEffect(() => {
+    setPages(1);
+    setUsers([]);
+  }, [makeMoreData]);
+
+  const fetchData = async (): Promise<void> => {
+    const response = await fetch(url);
+    const json = await response.json();
+    setIsMaxPagesReached(json.total_pages == pages);
+    setUsers(users?.length ? [...users, ...json.data] : json.data);
+  };
+
+  const getBigData = useCallback((): void => {
+    const json = bigDataObject.bigData[pages - 1];
+    setIsMaxPagesReached(json.total_pages == pages);
+    setUsers(users?.length ? [...users, ...json.data] : json.data);
+  }, [bigDataObject, users]);
+
+  const loadData = useCallback(async () => {
     try {
       if (isMaxPagesReached) return;
-      const response = await fetch(url);
-      const json = await response.json();
-      setIsMaxPagesReached(json.total_pages == pages);
-      setUsers(users?.length ? [...users, ...json.data] : json.data);
+      setTimeout(
+        async () => {
+          if (makeMoreData) {
+            console.log('1');
+            getBigData();
+          } else {
+            console.log('2');
+            fetchData();
+          }
+        },
+        withPageFetch ? 2000 : 0,
+      );
     } catch (error) {
       console.log('error', error);
     }
-  }, [url, users]);
+  }, [url, users, withPageFetch]);
 
   useEffect(() => {
-    fetchData();
-  }, [url, pages]);
+    console.log('loadData call');
+    loadData();
+  }, [url, pages, makeMoreData]);
 
   const showNextPage = (): void => {
+    console.log('showNextPage call');
     setPages(pages + 1);
   };
 
@@ -51,7 +86,7 @@ export const UserList: React.FC = () => {
       <InfiniteScroll
         dataLength={6}
         next={showNextPage}
-        hasMore={pages < 3 && !isMaxPagesReached}
+        hasMore={!isMaxPagesReached}
         loader={<h4>Loading...</h4>}
         endMessage={endMessage}
       >
