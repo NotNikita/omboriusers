@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {
   AvatarContainer,
@@ -29,17 +29,25 @@ export const UserList: React.FC<UserListProps> = ({
 }) => {
   const [pages, setPages] = useState<number>(1);
   const [users, setUsers] = useState<User[] | undefined>([]);
+  // TODO: How to make only one array
+  const [dbUsers, setDbUsers] = useState<User[] | undefined>([]);
   const [isMaxPagesReached, setIsMaxPagesReached] = useState<boolean>(false);
 
-  const url = `https://reqres.in/api/users?page=${pages}`;
+  const getUrl = (): string => {
+    return `https://reqres.in/api/users?page=${pages}`;
+  };
 
   useEffect(() => {
+    console.log('clear effect call');
     setPages(1);
     setUsers([]);
+    setDbUsers([]);
+    setIsMaxPagesReached(false);
+    loadData();
   }, [makeMoreData]);
 
   const fetchData = async (): Promise<void> => {
-    const response = await fetch(url);
+    const response = await fetch(getUrl());
     const json = await response.json();
     setIsMaxPagesReached(json.total_pages == pages);
     setUsers(users?.length ? [...users, ...json.data] : json.data);
@@ -47,9 +55,12 @@ export const UserList: React.FC<UserListProps> = ({
 
   const getBigData = useCallback((): void => {
     const json = bigDataObject.bigData[pages - 1];
-    setIsMaxPagesReached(json.total_pages == pages);
-    setUsers(users?.length ? [...users, ...json.data] : json.data);
-  }, [bigDataObject, users]);
+    console.log('getBigData', json);
+    console.log('pages', pages);
+    setIsMaxPagesReached(json.total_pages === pages);
+    console.log('users:', dbUsers);
+    setDbUsers(dbUsers?.length ? [...dbUsers, ...json.data] : json.data);
+  }, [bigDataObject, dbUsers, pages]);
 
   const loadData = useCallback(async () => {
     try {
@@ -57,10 +68,10 @@ export const UserList: React.FC<UserListProps> = ({
       setTimeout(
         async () => {
           if (makeMoreData) {
-            console.log('1');
+            console.log('its json');
             getBigData();
           } else {
-            console.log('2');
+            console.log('its fetch');
             fetchData();
           }
         },
@@ -69,17 +80,18 @@ export const UserList: React.FC<UserListProps> = ({
     } catch (error) {
       console.log('error', error);
     }
-  }, [url, users, withPageFetch]);
+  }, [withPageFetch, makeMoreData, pages]);
 
   useEffect(() => {
     console.log('loadData call');
     loadData();
-  }, [url, pages, makeMoreData]);
+  }, [pages]);
 
   const showNextPage = (): void => {
     console.log('showNextPage call');
     setPages(pages + 1);
   };
+  console.log('isMaxPagesReached', isMaxPagesReached);
 
   return (
     <StyledList>
@@ -90,17 +102,19 @@ export const UserList: React.FC<UserListProps> = ({
         loader={<h4>Loading...</h4>}
         endMessage={endMessage}
       >
-        {users?.map(({ id, avatar, first_name, last_name }) => (
-          <UserNode key={id}>
-            <AvatarContainer>
-              <UserAvatar src={avatar} />
-            </AvatarContainer>
-            <UserInfoContainer>
-              <div>{first_name}</div>
-              <div>{last_name}</div>
-            </UserInfoContainer>
-          </UserNode>
-        ))}
+        {(makeMoreData ? dbUsers : users)?.map(
+          ({ id, avatar, first_name, last_name }) => (
+            <UserNode key={id}>
+              <AvatarContainer>
+                <UserAvatar src={avatar} />
+              </AvatarContainer>
+              <UserInfoContainer>
+                <div>{first_name}</div>
+                <div>{last_name}</div>
+              </UserInfoContainer>
+            </UserNode>
+          ),
+        )}
       </InfiniteScroll>
     </StyledList>
   );

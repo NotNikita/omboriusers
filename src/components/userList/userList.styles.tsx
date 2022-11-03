@@ -24,11 +24,10 @@ export const UserNode = styled.li({
   padding: '15px',
   borderBottom: '2px solid #f1f1f1',
 });
-export const AvatarContainer = styled.div({
-  width: '30%',
-});
+export const AvatarContainer = styled.div({});
 export const UserAvatar = styled.img({
   borderRadius: '50%',
+  width: '4.5rem',
 });
 export const UserInfoContainer = styled.div({
   width: '80%',
@@ -36,7 +35,8 @@ export const UserInfoContainer = styled.div({
   alignItems: 'center',
   gap: '10px',
   paddingLeft: '30px',
-  fontSize: '1.4rem',
+  fontSize: '1.2rem',
+  fontWeight: '600',
 });
 
 export const endMessage: JSX.Element = (
