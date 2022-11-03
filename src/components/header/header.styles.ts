@@ -6,5 +6,6 @@ export const HeaderContainer = styled.header`
   align-items: center;
   padding: 10px 15px;
   background-color: #f1f1f1;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
+  font-weight: 600;
 `;

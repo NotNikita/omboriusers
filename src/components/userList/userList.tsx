@@ -1,14 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import {
-  AvatarContainer,
-  StyledList,
-  UserAvatar,
-  UserInfoContainer,
-  UserNode,
-  endMessage,
-} from './userList.styles';
+import { StyledList, endMessage } from './userList.styles';
 import { bigDataObject } from '../../constants/bigUserList';
+import { UserNode } from '../userNode/userNode';
 
 export interface User {
   id: number;
@@ -38,7 +32,6 @@ export const UserList: React.FC<UserListProps> = ({
   };
 
   useEffect(() => {
-    console.log('clear effect call');
     setPages(1);
     setUsers([]);
     setDbUsers([]);
@@ -55,10 +48,7 @@ export const UserList: React.FC<UserListProps> = ({
 
   const getBigData = useCallback((): void => {
     const json = bigDataObject.bigData[pages - 1];
-    console.log('getBigData', json);
-    console.log('pages', pages);
     setIsMaxPagesReached(json.total_pages === pages);
-    console.log('users:', dbUsers);
     setDbUsers(dbUsers?.length ? [...dbUsers, ...json.data] : json.data);
   }, [bigDataObject, dbUsers, pages]);
 
@@ -68,10 +58,8 @@ export const UserList: React.FC<UserListProps> = ({
       setTimeout(
         async () => {
           if (makeMoreData) {
-            console.log('its json');
             getBigData();
           } else {
-            console.log('its fetch');
             fetchData();
           }
         },
@@ -83,15 +71,12 @@ export const UserList: React.FC<UserListProps> = ({
   }, [withPageFetch, makeMoreData, pages]);
 
   useEffect(() => {
-    console.log('loadData call');
     loadData();
   }, [pages]);
 
   const showNextPage = (): void => {
-    console.log('showNextPage call');
     setPages(pages + 1);
   };
-  console.log('isMaxPagesReached', isMaxPagesReached);
 
   return (
     <StyledList>
@@ -102,19 +87,9 @@ export const UserList: React.FC<UserListProps> = ({
         loader={<h4>Loading...</h4>}
         endMessage={endMessage}
       >
-        {(makeMoreData ? dbUsers : users)?.map(
-          ({ id, avatar, first_name, last_name }) => (
-            <UserNode key={id}>
-              <AvatarContainer>
-                <UserAvatar src={avatar} />
-              </AvatarContainer>
-              <UserInfoContainer>
-                <div>{first_name}</div>
-                <div>{last_name}</div>
-              </UserInfoContainer>
-            </UserNode>
-          ),
-        )}
+        {(makeMoreData ? dbUsers : users)?.map((user, index) => (
+          <UserNode key={index} user={user} />
+        ))}
       </InfiniteScroll>
     </StyledList>
   );
